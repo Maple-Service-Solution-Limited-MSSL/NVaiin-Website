@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String
+  slug           String      @unique
+  description    String      @default("")
+  price          Float
+  compareAtPrice Float?
+  images         String      @default("[]")
+  sizes          String      @default("[]")
+  category       String      @default("t-shirts")
+  tags           String      @default("[]")
+  isLimited      Boolean     @default(false)
+  isFeatured     Boolean     @default(false)
+  inStock        Boolean     @default(true)
+  stockQty       Int         @default(0)
+  displayOrder   Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  customerName String      @default("")
+  email        String      @default("")
+  address      String      @default("{}")
+  items        OrderItem[]
+  total        Float       @default(0)
+  status       String      @default("pending")
+  notes        String      @default("")
+  createdAt    DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  size      String  @default("")
+  qty       Int     @default(1)
+  price     Float
+}
+
+model LookbookImage {
+  id           String   @id @default(cuid())
+  imageUrl     String   @default("")
+  title        String   @default("")
+  seasonLabel  String   @default("")
+  displayOrder Int      @default(0)
+  isVisible    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model NewsletterLog {
+  id        String   @id @default(cuid())
+  subject   String   @default("")
+  body      String   @default("")
+  sentAt    DateTime @default(now())
+  sentCount Int      @default(0)
+}
+
+model Faq {
+  id           String @id @default(cuid())
+  question     String @default("")
+  answer       String @default("")
+  category     String @default("General")
+  displayOrder Int    @default(0)
+}
+
+model SiteSettings {
+  id                 String  @id @default("singleton")
+  storeName          String  @default("N'VAIIN")
+  tagline            String  @default("Not Made In Vain")
+  contactEmail       String  @default("contact@nvaiin.com")
+  instagramUrl       String  @default("")
+  twitterUrl         String  @default("")
+  tiktokUrl          String  @default("")
+  freeShippingAmount Float   @default(75)
+  announcementActive Boolean @default(true)
+  announcementText   String  @default("FREE SHIPPING ON ORDERS OVER $75 ✦ NEW DROP LIVE NOW ✦")
+  heroTagline        String  @default("NOT MADE IN VAIN")
+  heroSubheading     String  @default("Conscious Fashion. Timeless Style.")
+  manifestoText      String  @default("NOT MADE IN VAIN ✦ CONSCIOUS FASHION ✦ 02.22.23 ✦ WEAR WITH PURPOSE ✦")
+  pullQuote          String  @default("Style is a reflection of values.")
+  metaTitle          String  @default("N'VAIIN — Not Made In Vain")
+  metaDescription    String  @default("")
+  googleAnalyticsId  String  @default("")
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String   @default("")
+  createdAt DateTime @default(now())
+}
