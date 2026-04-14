@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import gsap from 'gsap';
 
 type SplitType = 'chars' | 'words' | 'lines';
@@ -35,6 +35,13 @@ export function SplitTextReveal({
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const hasAnimated = useRef(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Mark as mounted after hydration (deferred to satisfy React 19 hooks rule)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const splitContent = useCallback((el: HTMLElement) => {
     // Clear previous content
@@ -105,9 +112,7 @@ export function SplitTextReveal({
 
     splitContent(el);
 
-    const targets = animation === 'lines'
-      ? el.querySelectorAll(':scope > span > span')
-      : el.querySelectorAll(':scope > span > span');
+    const targets = el.querySelectorAll(':scope > span > span');
 
     // Set initial state
     gsap.set(targets, {
@@ -126,16 +131,21 @@ export function SplitTextReveal({
     });
 
     tlRef.current = tl;
-  }, [splitContent, animation, delay, stagger, duration, ease]);
+  }, [splitContent, delay, stagger, duration, ease]);
 
   useEffect(() => {
+    // Only run GSAP animation after the component is mounted (client-side only)
+    if (!mounted) return;
+
     const el = containerRef.current;
     if (!el) return;
 
     if (trigger === 'onMount') {
-      // Small delay to ensure DOM is painted
+      // Use double rAF to ensure the browser has painted the server HTML
       const timer = requestAnimationFrame(() => {
-        runAnimation();
+        requestAnimationFrame(() => {
+          runAnimation();
+        });
       });
       return () => cancelAnimationFrame(timer);
     }
@@ -159,7 +169,7 @@ export function SplitTextReveal({
     return () => {
       observer.disconnect();
     };
-  }, [trigger, runAnimation]);
+  }, [trigger, runAnimation, mounted]);
 
   useEffect(() => {
     return () => {
@@ -177,11 +187,8 @@ export function SplitTextReveal({
   const Element = Tag as React.ElementType;
 
   return (
-    <Element ref={containerRef as React.Ref<HTMLElement>} className={className}>
-      {/* Content injected by GSAP split logic */}
-      {typeof window === 'undefined' && (
-        <span style={{ visibility: 'hidden' }}>{text}</span>
-      )}
+    <Element ref={containerRef as React.Ref<HTMLElement>} className={className} aria-label={text}>
+      {text}
     </Element>
   );
 }
