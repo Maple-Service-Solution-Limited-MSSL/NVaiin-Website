@@ -36,7 +36,13 @@ function CartItemRow({ item }: { item: CartItem }) {
   const updateQty = useCartStore((s) => s.updateQty);
 
   return (
-    <div className="flex gap-4 py-4 border-b border-nv-smoke/50">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 40 }}
+      transition={{ duration: 0.25 }}
+      className="flex gap-4 py-4 border-b border-nv-smoke/50"
+    >
       {/* Product Image */}
       <div className="relative h-24 w-20 flex-shrink-0 bg-nv-smoke overflow-hidden">
         {item.image ? (
@@ -103,7 +109,7 @@ function CartItemRow({ item }: { item: CartItem }) {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -111,7 +117,12 @@ function EmptyCart() {
   const closeCart = useCartStore((s) => s.closeCart);
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-6 px-6 text-center">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, delay: 0.15 }}
+      className="flex flex-col items-center justify-center flex-1 gap-6 px-6 text-center"
+    >
       <div className="w-20 h-20 rounded-full border border-nv-smoke flex items-center justify-center">
         <ShoppingBag size={32} className="text-nv-fog" strokeWidth={1.5} />
       </div>
@@ -131,7 +142,7 @@ function EmptyCart() {
       >
         Continue Shopping
       </Link>
-    </div>
+    </motion.div>
   );
 }
 
@@ -149,16 +160,18 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop Overlay */}
+          {/* Backdrop with gradient overlay */}
           <motion.div
-            className="fixed inset-0 z-[70] bg-black/70"
+            className="fixed inset-0 z-[70]"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
             onClick={closeCart}
             aria-hidden="true"
-          />
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-black/80" />
+          </motion.div>
 
           {/* Drawer Panel */}
           <motion.div
@@ -171,6 +184,9 @@ export function CartDrawer() {
             aria-modal="true"
             aria-label="Shopping cart"
           >
+            {/* Gold accent line at top */}
+            <div className="h-[2px] w-full bg-gradient-to-r from-nv-gold via-nv-gold/60 to-transparent" />
+
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-nv-smoke">
               <div className="flex items-baseline gap-3">
@@ -199,13 +215,20 @@ export function CartDrawer() {
               <>
                 {/* Items List (scrollable) */}
                 <div className="flex-1 overflow-y-auto px-6">
-                  {items.map((item) => (
-                    <CartItemRow key={item.id} item={item} />
-                  ))}
+                  <AnimatePresence initial={false}>
+                    {items.map((item) => (
+                      <CartItemRow key={item.id} item={item} />
+                    ))}
+                  </AnimatePresence>
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-nv-smoke px-6 py-5 flex flex-col gap-4 bg-nv-concrete">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="border-t border-nv-smoke px-6 py-5 flex flex-col gap-4 bg-nv-concrete"
+                >
                   {/* Subtotal */}
                   <div className="flex items-center justify-between">
                     <span className="font-bebas text-sm tracking-[0.15em] text-nv-fog uppercase">
@@ -225,7 +248,7 @@ export function CartDrawer() {
                   <p className="text-center font-mono-brand text-[10px] text-nv-fog tracking-wide">
                     Free shipping on orders over $75
                   </p>
-                </div>
+                </motion.div>
               </>
             )}
           </motion.div>

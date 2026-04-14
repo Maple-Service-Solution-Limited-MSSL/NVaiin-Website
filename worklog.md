@@ -34,3 +34,217 @@ Stage Summary:
 - NextAuth admin authentication
 - All 14 API routes functional
 - Database seeded with 2 products, admin user, FAQs, lookbook images, settings
+
+---
+Task ID: 5
+Agent: Lookbook Enhancement Agent
+Task: Enhance lookbook page with GSAP-powered horizontal scroll and premium editorial experience
+
+Work Log:
+- Read existing lookbook page and project worklog to understand codebase patterns
+- Studied homepage animation patterns (letter variants, fadeInUp, staggerContainer) for consistency
+- Rewrote `/src/app/lookbook/page.tsx` as a premium editorial lookbook with 4 sections:
+  - **Section 1 (Hero)**: Staggered letter animation for "LOOKBOOK" heading using Framer Motion, gold "SEASON 01 — EDITORIAL" subtitle, decorative gradient line, collection metadata (8 looks, established date, philosophy), scroll indicator
+  - **Section 2 (Horizontal Scroll Gallery)**: Native scroll-driven horizontal scroll without GSAP ScrollTrigger — uses scroll event listener + requestAnimationFrame for performance. Sticky viewport container with calculated height based on total image width. Edge fade gradients for depth. Progress bar with look counter (01/08 format). Image captions with parallax slide-up on hover. Responsive image sizing (85vw mobile → 65vw desktop). Proper cleanup of scroll listeners and RAF on unmount.
+  - **Section 3 (Magazine Grid)**: Masonry-style 2-column grid with varying aspect ratios (16:9 hero, 3:4, 3:5, 4/5, square). First image spans full width. Hover: image zooms 105%, caption slides up from bottom with expanding gold underline. Staggered reveal via Framer Motion whileInView.
+  - **Section 4 (Statement/Quote)**: Centered "Every piece tells a story" quote with decorative gold line patterns above and below. Fades in on scroll using useInView hook.
+- Added 8 fallback images from N'VAIIN CDN for when API is unavailable
+- Added SSR-safe mounting check with `useState(mounted)` pattern
+- Fixed pre-existing lint error in `/src/components/animations/PageTransition.tsx` — replaced ref-based render-time access with `useState` + `useEffect` with `requestAnimationFrame` pattern to satisfy strict React 19 hooks rules
+- All lint checks pass with zero errors
+
+Stage Summary:
+- Lookbook page transformed from basic snap-scroll to premium editorial experience
+- Horizontal scroll gallery driven by native scroll events (no GSAP ScrollTrigger dependency)
+- Proper performance optimizations: will-change, contain-paint, RAF throttling, cleanup on unmount
+- Consistent design language with homepage animations and brand tokens
+- PageTransition component fixed for React 19 strict mode compatibility
+
+---
+Task ID: 1 (Animation Components)
+Agent: Animation Components Builder
+Task: Create GSAP-powered reusable animation primitives
+
+Work Log:
+- Created `/src/components/animations/` directory with 5 new animation components:
+  - **SplitTextReveal.tsx**: GSAP text reveal splitting text into chars/words/lines with staggered y:100%→0 animation. Supports onMount and onScroll (IntersectionObserver) triggers. Uses GSAP timeline with configurable delay, stagger, duration, ease. Proper cleanup on unmount.
+  - **MagneticButton.tsx**: Cursor-following magnetic effect. Tracks mouse offset from button center, applies transform with configurable strength (default 0.3). Spring-back with gsap.to elastic easing on mouseleave. GPU-accelerated via will-change:transform.
+  - **ParallaxImage.tsx**: Scroll-based parallax using Next.js Image. IntersectionObserver for viewport detection, RAF + scroll listener for smooth positioning. Configurable speed (positive=slower, negative=faster). Supports fill mode with extended dimensions.
+  - **RevealSection.tsx**: Framer Motion scroll reveal wrapper. 4 directions (up/left/right/clip-path). Uses useInView with once:true and threshold 0.15. Custom easing per direction.
+  - **TextScramble.tsx**: Character scramble/decode effect. Randomizes chars from fixed charset, resolves left-to-right with configurable reveal delay. Proper interval cleanup on text change or unmount.
+- Fixed lint error in pre-existing `PageTransition.tsx` — refactored TransitionOverlay to use deferred setState via setTimeout callbacks; refactored PageContent to use requestAnimationFrame callback
+- Verified: `bun run lint` passes with zero errors, dev server compiles successfully
+
+Stage Summary:
+- 5 production-ready reusable animation components created
+- All components use 'use client', proper TypeScript types, and full cleanup on unmount
+- No GSAP ScrollTrigger (SSR-safe), using IntersectionObserver instead
+- Pre-existing PageTransition.tsx lint error resolved
+
+---
+Task ID: 3
+Agent: Component Refactoring Agent
+Task: Extract reusable shop components and enhance shop pages with visual polish
+
+Work Log:
+- Read worklog, shop page, product detail page, and CartDrawer to understand existing implementation
+- Created 3 reusable shop components in `/src/components/shop/`:
+  - **ProductCard.tsx**: Extracted product card from both shop and product detail pages. Supports `aspectRatio` prop ('portrait' | 'square'), staggered Framer Motion entrance animation via `index` prop, 700ms hover zoom, LIMITED badge (top-left, nv-red), SOLD OUT overlay (bg-black/70), hover overlay sliding up from bottom with product name + "VIEW PIECE" in gold, price with strikethrough compare-at-price. All images use `unoptimized` prop.
+  - **SizeSelector.tsx**: Grid of size buttons (4 cols mobile, 6 cols sm+), selected state bg-nv-gold, unselected bg-nv-smoke with hover border-gold, `cursor-hover` on all buttons.
+  - **QuantitySelector.tsx**: Minus/Plus layout using Lucide icons, min quantity 1, styling matches original inline implementation, `cursor-hover` on buttons.
+- Updated `/src/app/shop/page.tsx`: Replaced inline product card rendering with `<ProductCard>` component, removed `Image`/`Link` imports no longer needed, added `cursor-hover` to filter buttons.
+- Updated `/src/app/shop/[slug]/page.tsx`: Replaced inline `ProductCard` function, size selector grid, and quantity selector with imported components. Removed `Minus`/`Plus` icon imports. All images use `unoptimized` prop. Added `cursor-hover` to interactive elements.
+- Enhanced `/src/components/shop/CartDrawer.tsx`:
+  - Backdrop: Changed flat `bg-black/70` to gradient overlay (`bg-gradient-to-b from-black/50 via-black/70 to-black/80`)
+  - Added gold accent line at top of drawer (`h-[2px] bg-gradient-to-r from-nv-gold via-nv-gold/60 to-transparent`)
+  - Added Framer Motion animation to cart item rows (fade+slide enter, slide-right exit) with `AnimatePresence` wrapper
+  - Added animation to empty cart state (scale+fade entrance)
+  - Added animation to footer section (fade+slide-up with delay)
+  - All interactive elements have `cursor-hover` class
+- ESLint passes with zero errors
+
+Stage Summary:
+- 3 new reusable components: ProductCard, SizeSelector, QuantitySelector
+- Shop page and product detail page refactored to use shared components
+- CartDrawer enhanced with gradient backdrop, gold accent line, and Framer Motion micro-animations on items/footer/empty state
+- Consistent `cursor-hover` class on all interactive elements
+- Zero lint errors
+
+---
+Task ID: 2
+Agent: Page Transition Agent
+Task: Create page transition system with clip-path wipe effect
+
+Work Log:
+- Read worklog and project structure to understand existing layout (root layout.tsx, admin layout.tsx, components)
+- Created `/src/components/animations/PageTransition.tsx` with three sub-components:
+  - **TransitionOverlay**: Detects route changes via `usePathname()` + `useRef` previous-pathname tracking. Three-phase state machine (`idle → wipeIn → wipeOut → idle`) managed via deferred `setTimeout` callbacks (satisfies React 19's `react-hooks/set-state-in-effect` lint rule). Gold clip-path wipe: sweeps in from right (0.45s), retracts to right (0.4s), `EASE_IN_OUT_CIRC` easing. Layered overlay: solid gold + gradient shimmer + grain texture at 8% opacity. Fixed `z-[9998]`, `pointer-events-none`.
+  - **PageContent**: Wraps children with `motion.div`, fade + 16px slide-up entrance (0.6s, `EASE_OUT_QUART`). Re-triggers per route via `animationKey` state updated via `requestAnimationFrame` callback.
+  - **PageTransition** (exported): Composes overlay + content wrapper in fragment.
+- Integrated into `/src/app/layout.tsx`: imported and wrapped `{children}` inside `<main>` with `<PageTransition>`.
+- Cleaned up unused `EASE_OUT_EXPO` constant.
+- ESLint passes with zero errors. Dev server compiles successfully.
+
+Stage Summary:
+- Cinematic gold clip-path wipe page transition system added
+- Two-phase overlay: wipe-in covers screen → wipe-out reveals new page
+- Subtle content fade + slide-up on page enter
+- Zero lint errors, compatible with React 19 strict hooks rules
+- Works across all public routes (/shop, /lookbook, /about, /contact, /cart, /faqs)
+
+---
+Task ID: 6
+Agent: Polish & Enhancement Agent
+Task: Polish and enhance FAQ page, Footer, About page, and Contact page with animations and visual refinements
+
+Work Log:
+- Read worklog and all relevant source files (FAQ page, Footer, About page, Contact page, RevealSection, SplitTextReveal)
+- Verified layout already has sticky footer behavior (`min-h-screen flex flex-col` with Footer after `main`)
+
+**FAQ Page (`/src/app/faqs/page.tsx`)**:
+- Replaced basic `<motion.h1>` heading with `<RevealSection direction="up">` wrapping `<SplitTextReveal>` for "FAQS" using character animation on mount
+- Added decorative gold gradient line under heading (`bg-gradient-to-r from-nv-gold via-nv-gold/60 to-transparent`)
+- Each FAQ item now has staggered reveal animation via `index * 0.05` delay in `AnimatePresence`
+- Enhanced accordion: smoother open/close transition (0.35s with custom cubic-bezier), gold left border on open items, rotated icon, separator line inside answer
+- Polished empty state: centered with circular icon container and "View all FAQs" action button
+- Added bottom CTA section: "Still have questions?" with description and gold "Contact Us" button with arrow icon linking to `/contact`
+- All interactive elements have `cursor-hover` class
+
+**Footer (`/src/components/layout/Footer.tsx`)**:
+- Converted to `'use client'` component for scroll-based back-to-top button
+- Added gold gradient line at the top of footer (`bg-gradient-to-r from-transparent via-nv-gold to-transparent`)
+- Added floating back-to-top button (bottom-right, `z-40`) with `AnimatePresence` — appears after 600px scroll, smooth scroll to top on click, gold background with hover white transition
+- Replaced generic `ExternalLink` icons with proper SVG icons for X/Twitter and TikTok
+- Added sacred timestamp "02/22/2023 — 2:22PM" with slightly muted gold (`text-nv-gold/70`) in the bottom bar
+- All navigation and social links now have `cursor-hover` class and gold hover transitions
+
+**About Page (`/src/app/about/page.tsx`)**:
+- Hero heading: Replaced Framer Motion `whileInView` with `<SplitTextReveal animation="chars">` for "NOT MADE IN VAIN" with staggered character reveal on mount
+- Created `TimestampCounter` component: each character of "02/22/2023 — 2:22PM" fades in individually when scrolled into view (IntersectionObserver with 0.3 threshold)
+- Brand story paragraphs: Each wrapped in `<RevealSection direction="up">` with staggered delays (0, 0.1, 0.2, 0.3)
+- Pull quote section: Wrapped decorative lines and blockquote in `<RevealSection direction="clip">` for a wipe-in reveal effect
+- Added "THE JOURNEY" timeline section between brand story and values:
+  - 6 milestones (Brand Founded, First Collection, Community Launch, Global Reach, Lookbook Vol. 01, The Movement Continues)
+  - Vertical timeline with gold connecting line (desktop: centered, mobile: left-aligned)
+  - Each milestone fades in from alternating sides on scroll using `useInView`
+  - Animated gold dots with spring animation and ring glow effect
+  - Date labels in gold mono font, titles in Anton, descriptions in fog mono
+- Values cards: Enhanced hover states with gold gradient glow overlay, expanding gold underline decoration, and smooth border-color transitions
+
+**Contact Page (`/src/app/contact/page.tsx`)**:
+- Added decorative gold gradient line above heading
+- Replaced basic `<motion.h1>` with `<SplitTextReveal>` for "REACH OUT" character animation
+- Form card: Wrapped in `<RevealSection direction="up" delay={0.3}>`, added gold accent gradient line at top of card
+- Social links section: Added subtitle text, increased spacing, added scale-up hover animation on icons (`group-hover:scale-110`), hover border-gold transitions, `cursor-hover` on all links
+- Footer note and social section wrapped in `<RevealSection>` with staggered delays
+
+- ESLint passes with zero errors, dev server compiles successfully
+
+Stage Summary:
+- 4 pages/components enhanced with GSAP SplitTextReveal, Framer Motion RevealSection, and custom animations
+- FAQ page: split text heading, staggered FAQ items, polished empty state, bottom CTA
+- Footer: back-to-top button, gold gradient line, proper social icons, sacred timestamp
+- About page: character-split hero, animated timestamp, clip-path pull quote, full milestone timeline, enhanced value cards with gold glow
+- Contact page: split text heading, gold accent line on card, improved social section with scale animations
+- Consistent use of brand design tokens and `cursor-hover` throughout
+- Zero lint errors
+
+---
+Task ID: 4
+Agent: Homepage Animation Integration Agent
+Task: Integrate GSAP animation components into homepage and add deeper GSAP-powered animations
+
+Work Log:
+- Read worklog, all 5 animation components (SplitTextReveal, MagneticButton, ParallaxImage, RevealSection, TextScramble), and current homepage (718 lines, 8 sections)
+- Added imports: gsap, SplitTextReveal, MagneticButton, ParallaxImage, RevealSection, TextScramble, useRef, useEffect
+- Removed unused code: `clipReveal` variant, `letterVariants` variant, `HeroTitle` component
+
+**Section 1 (HeroSection)**:
+- Replaced manual `HeroTitle` letter-by-letter Framer Motion animation with `<SplitTextReveal text="N'VAIIN" animation="chars" trigger="onMount" stagger={0.08}>` preserving all Anton font styling via className
+- Wrapped "SHOP THE DROP" and "VIEW LOOKBOOK" CTA links in `<MagneticButton as="div">` for cursor-following magnetic effect
+- Added GSAP parallax to hero background gradient: scroll listener moves the radial gradient at 30% scroll speed using `gsap.set`, with proper cleanup on unmount
+
+**Section 2 (ManifestoMarquee)**:
+- Kept as-is (CSS animation works well for continuous marquee)
+
+**Section 3 (FeaturedDropSection)**:
+- Replaced outer `staggerContainer`/`whileInView` Framer Motion pattern with `<RevealSection direction="up">` wrapping the entire section
+- Replaced plain `Image` with `<ParallaxImage>` (speed=0.08, fill, unoptimized) for the product photo
+- Wrapped "SHOP NOW" CTA link in `<MagneticButton as="div">`
+- Removed all individual motion.div variants from inner elements (handled by single RevealSection)
+
+**Section 4 (BrandStatementSection)**:
+- Replaced Framer Motion `clipReveal` on pull quote with `<SplitTextReveal text="Style is a reflection of values." animation="words" trigger="onScroll">`
+- Wrapped mission paragraph and stats grid in `<RevealSection direction="up">`, removing individual motion wrappers
+
+**Section 5 (LookbookGrid)**:
+- Kept Framer Motion stagger for grid items (works well for grid layout)
+- Replaced "THE LOOKBOOK" heading with `<SplitTextReveal animation="words" trigger="onScroll">`, separated from stagger container to avoid timing conflicts
+- Restructured: header uses SplitTextReveal directly, grid items use staggerContainer independently
+
+**Section 6 (MusicVibesSection)**:
+- Added IntersectionObserver-based lazy mount for `<TextScramble text="THE SOUND OF N'VAIIN">` — TextScramble only renders when section enters viewport, ensuring the decode effect is visible to the user
+- Wrapped entire section in `<RevealSection direction="up">` for scroll reveal
+
+**Section 7 (InstagramFeedSection)**:
+- Wrapped in `<RevealSection direction="up">`, replacing staggerContainer/whileInView pattern
+- Removed individual motion.div variants from grid items and header (single reveal for entire section)
+
+**Section 8 (NewsletterSection)**:
+- Replaced "JOIN THE MOVEMENT" heading with `<SplitTextReveal animation="words" trigger="onScroll">`
+- Wrapped the email form and "No spam" text in `<RevealSection direction="up">`
+- Preserved AnimatePresence form↔success transition logic
+
+- All lint checks pass with zero errors, dev server compiles successfully
+
+Stage Summary:
+- Homepage enhanced with 5 reusable animation components integrated across 7 of 8 sections
+- GSAP parallax added to hero background gradient
+- MagneticButton applied to all 3 CTA buttons (hero + featured drop)
+- ParallaxImage on featured product photo for depth
+- SplitTextReveal used for 4 headings (hero title, pull quote, lookbook, newsletter)
+- TextScramble with lazy viewport trigger for music section heading
+- RevealSection applied to 6 sections for consistent scroll-reveal behavior
+- WAVEFORM_HEIGHTS preserved as module-level constant (no hydration issues)
+- All original content, styling, and brand design tokens preserved
+- Zero lint errors

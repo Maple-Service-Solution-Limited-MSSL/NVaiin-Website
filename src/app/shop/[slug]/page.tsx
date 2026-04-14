@@ -1,94 +1,45 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Minus, Plus, ShoppingBag } from 'lucide-react'
-import { useCartStore } from '@/lib/cart-store'
-import { toast } from 'sonner'
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ShoppingBag } from 'lucide-react';
+import { useCartStore } from '@/lib/cart-store';
+import { toast } from 'sonner';
+import { ProductCard } from '@/components/shop/ProductCard';
+import { SizeSelector } from '@/components/shop/SizeSelector';
+import { QuantitySelector } from '@/components/shop/QuantitySelector';
 
 interface Product {
-  id: string
-  name: string
-  slug: string
-  description: string
-  price: number
-  compareAtPrice: number | null
-  images: string[]
-  sizes: string[]
-  category: string
-  tags: string[]
-  isLimited: boolean
-  isFeatured: boolean
-  inStock: boolean
-  stockQty: number
-}
-
-function ProductCard({ product }: { product: Product }) {
-  return (
-    <Link href={`/shop/${product.slug}`} className="bg-nv-concrete overflow-hidden group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-nv-smoke">
-        {product.images && product.images.length > 0 ? (
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-nv-smoke">
-            <span className="font-anton text-nv-fog text-lg">NO IMAGE</span>
-          </div>
-        )}
-        {product.isLimited && (
-          <div className="absolute top-3 left-3 bg-nv-red text-white font-bebas text-xs px-2 py-0.5 tracking-wider z-10">
-            LIMITED
-          </div>
-        )}
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
-            <span className="font-anton text-2xl text-white uppercase">SOLD OUT</span>
-          </div>
-        )}
-        {product.inStock && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-            <span className="font-bebas tracking-wider text-white text-lg uppercase hover:text-nv-gold transition-colors duration-200">
-              VIEW PIECE
-            </span>
-          </div>
-        )}
-      </div>
-      <div className="px-4 pt-3 pb-4">
-        <h3 className="font-bebas text-lg tracking-wider text-nv-white truncate">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="font-mono-brand text-nv-gold">${product.price.toFixed(2)}</span>
-          {product.compareAtPrice && product.compareAtPrice > product.price && (
-            <span className="font-mono-brand text-nv-fog text-sm line-through">
-              ${product.compareAtPrice.toFixed(2)}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  )
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice: number | null;
+  images: string[];
+  sizes: string[];
+  category: string;
+  tags: string[];
+  isLimited: boolean;
+  isFeatured: boolean;
+  inStock: boolean;
+  stockQty: number;
 }
 
 export default function ProductDetailPage() {
-  const params = useParams()
-  const slug = params.slug as string
-  const addItem = useCartStore((s) => s.addItem)
+  const params = useParams();
+  const slug = params.slug as string;
+  const addItem = useCartStore((s) => s.addItem);
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [notFound, setNotFound] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [selectedSize, setSelectedSize] = useState<string>('')
-  const [qty, setQty] = useState(1)
-  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [product, setProduct] = useState<Product | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [qty, setQty] = useState(1);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -96,37 +47,37 @@ export default function ProductDetailPage() {
         const [productRes, allRes] = await Promise.all([
           fetch(`/api/products/${slug}`),
           fetch('/api/products'),
-        ])
+        ]);
 
         if (productRes.ok) {
-          const data = await productRes.json()
-          setProduct(data)
+          const data = await productRes.json();
+          setProduct(data);
           // Auto-select first size
-          const sizes = Array.isArray(data.sizes) ? data.sizes : JSON.parse(data.sizes || '[]')
-          if (sizes.length > 0) setSelectedSize(sizes[0])
+          const sizes = Array.isArray(data.sizes) ? data.sizes : JSON.parse(data.sizes || '[]');
+          if (sizes.length > 0) setSelectedSize(sizes[0]);
         } else {
-          setNotFound(true)
+          setNotFound(true);
         }
 
         if (allRes.ok) {
-          const allData = await allRes.json()
-          setAllProducts(allData)
+          const allData = await allRes.json();
+          setAllProducts(allData);
         }
       } catch {
-        setNotFound(true)
+        setNotFound(true);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    if (slug) fetchData()
-  }, [slug])
+    if (slug) fetchData();
+  }, [slug]);
 
   const handleAddToCart = () => {
     if (!product || !selectedSize) {
-      toast.error('Please select a size.')
-      return
+      toast.error('Please select a size.');
+      return;
     }
-    if (!product.inStock) return
+    if (!product.inStock) return;
 
     addItem({
       productId: product.id,
@@ -135,13 +86,13 @@ export default function ProductDetailPage() {
       image: product.images && product.images.length > 0 ? product.images[0] : '',
       size: selectedSize,
       qty,
-    })
-    toast.success(`${product.name} added to bag.`)
-  }
+    });
+    toast.success(`${product.name} added to bag.`);
+  };
 
   const relatedProducts = allProducts
     .filter((p) => p.id !== product?.id)
-    .slice(0, 3)
+    .slice(0, 3);
 
   if (loading) {
     return (
@@ -159,7 +110,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (notFound || !product) {
@@ -174,18 +125,18 @@ export default function ProductDetailPage() {
           </p>
           <Link
             href="/shop"
-            className="inline-block bg-nv-gold text-nv-black font-anton tracking-wider px-8 py-4 hover:bg-nv-white transition-colors duration-200"
+            className="inline-block bg-nv-gold text-nv-black font-anton tracking-wider px-8 py-4 hover:bg-nv-white transition-colors duration-200 cursor-hover"
           >
             BACK TO SHOP
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   const sizes: string[] = Array.isArray(product.sizes)
     ? product.sizes
-    : JSON.parse(product.sizes || '[]')
+    : JSON.parse(product.sizes || '[]');
 
   return (
     <div className="min-h-screen bg-nv-black">
@@ -197,7 +148,7 @@ export default function ProductDetailPage() {
         className="px-4 sm:px-6 lg:px-10 pt-28"
       >
         <div className="flex items-center gap-2 font-mono-brand text-xs text-nv-fog">
-          <Link href="/shop" className="hover:text-nv-gold transition-colors duration-200">
+          <Link href="/shop" className="hover:text-nv-gold transition-colors duration-200 cursor-hover">
             SHOP
           </Link>
           <span>/</span>
@@ -220,6 +171,7 @@ export default function ProductDetailPage() {
                 src={product.images[0]}
                 alt={product.name}
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 priority
@@ -277,21 +229,11 @@ export default function ProductDetailPage() {
               <p className="font-bebas tracking-wider text-nv-fog text-sm uppercase mb-3">
                 SIZE
               </p>
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`py-3 font-bebas tracking-wider text-sm transition-all duration-200 ${
-                      selectedSize === size
-                        ? 'bg-nv-gold text-nv-black'
-                        : 'bg-nv-smoke text-nv-white border border-nv-smoke hover:border-nv-gold'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
+              <SizeSelector
+                sizes={sizes}
+                selectedSize={selectedSize}
+                onSelectSize={setSelectedSize}
+              />
             </div>
 
             {/* Quantity */}
@@ -299,32 +241,14 @@ export default function ProductDetailPage() {
               <p className="font-bebas tracking-wider text-nv-fog text-sm uppercase mb-3">
                 QUANTITY
               </p>
-              <div className="flex items-center gap-0">
-                <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="w-12 h-12 flex items-center justify-center bg-nv-smoke border border-nv-smoke text-nv-white hover:border-nv-gold hover:text-nv-gold transition-colors duration-200"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <div className="w-14 h-12 flex items-center justify-center bg-nv-concrete border-y border-nv-smoke font-mono-brand text-sm">
-                  {qty}
-                </div>
-                <button
-                  onClick={() => setQty((q) => q + 1)}
-                  className="w-12 h-12 flex items-center justify-center bg-nv-smoke border border-nv-smoke text-nv-white hover:border-nv-gold hover:text-nv-gold transition-colors duration-200"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
+              <QuantitySelector quantity={qty} onChange={setQty} />
             </div>
 
             {/* Add to Cart */}
             <button
               onClick={handleAddToCart}
               disabled={!product.inStock}
-              className={`w-full font-anton text-lg uppercase py-4 mt-6 transition-all duration-200 ${
+              className={`w-full font-anton text-lg uppercase py-4 mt-6 transition-all duration-200 cursor-hover ${
                 product.inStock
                   ? 'bg-nv-gold text-nv-black hover:bg-nv-gold/90'
                   : 'bg-nv-smoke text-nv-fog cursor-not-allowed'
@@ -368,20 +292,16 @@ export default function ProductDetailPage() {
             </motion.h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedProducts.map((rp, index) => (
-                <motion.div
+                <ProductCard
                   key={rp.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                >
-                  <ProductCard product={rp} />
-                </motion.div>
+                  product={rp}
+                  index={index}
+                />
               ))}
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
