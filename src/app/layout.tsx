@@ -3,11 +3,7 @@ import { Anton, Bebas_Neue, Space_Mono, Syne } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { GrainOverlay } from "@/components/layout/GrainOverlay";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { CartDrawer } from "@/components/shop/CartDrawer";
-import { PageTransition } from "@/components/animations/PageTransition";
+
 
 const anton = Anton({
   weight: "400",
@@ -70,15 +66,7 @@ export default function RootLayout({
         className={`${anton.variable} ${bebas.variable} ${spaceMono.variable} ${syne.variable} antialiased bg-nv-black text-nv-white`}
       >
         <Providers>
-          <div className="min-h-screen flex flex-col">
-            <AnnouncementBar />
-            <Navbar />
-            <main className="flex-1">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer />
-          </div>
-          <CartDrawer />
+          {children}
           <GrainOverlay />
         </Providers>
       </body>

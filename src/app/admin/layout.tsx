@@ -208,13 +208,14 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isLoginPage = pathname === '/admin/login'
 
   // Auth guard
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!isLoginPage && status === 'unauthenticated') {
       router.push('/admin/login')
     }
-  }, [status, router])
+  }, [status, router, isLoginPage])
 
   // Loading state
   if (status === 'loading') {
@@ -226,6 +227,11 @@ export default function AdminLayout({
         </div>
       </div>
     )
+  }
+
+  // Skip layout shell for login page
+  if (isLoginPage) {
+    return <>{children}</>
   }
 
   // Don't render while redirecting
