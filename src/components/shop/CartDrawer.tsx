@@ -240,9 +240,13 @@ export function CartDrawer() {
                   </div>
 
                   {/* Checkout Button */}
-                  <button className="w-full font-bebas text-base tracking-[0.2em] uppercase bg-nv-gold text-nv-black py-4 hover:bg-nv-white transition-colors duration-300 cursor-hover">
+                  <Link
+                    href="/checkout"
+                    onClick={closeCart}
+                    className="w-full font-bebas text-base tracking-[0.2em] uppercase bg-nv-gold text-nv-black py-4 hover:bg-nv-white transition-colors duration-300 cursor-hover text-center inline-block"
+                  >
                     Checkout
-                  </button>
+                  </Link>
 
                   {/* Shipping Note */}
                   <p className="text-center font-mono-brand text-[10px] text-nv-fog tracking-wide">

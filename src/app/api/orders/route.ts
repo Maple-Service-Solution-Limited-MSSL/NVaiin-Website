@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const total = items.reduce((sum: number, item: { price: number; qty: number }) => sum + item.price * item.qty, 0);
+    const subtotal = items.reduce((sum: number, item: { price: number; qty: number }) => sum + item.price * item.qty, 0);
+    const total = subtotal + (subtotal >= 75 ? 0 : 9.99);
 
     const order = await db.order.create({
       data: {
